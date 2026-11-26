@@ -1,0 +1,10 @@
+LIBRERIA SUPABASE (da scaricare una sola volta)
+
+1. Apri questo indirizzo nel browser:
+   https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js
+2. Salva la pagina con il nome  supabase.js  in questa cartella (lib/).
+   (tasto destro > Salva con nome; il file e' di circa 150-200 KB)
+3. Il file va caricato su GitHub insieme al resto: cosi' l'app non
+   dipende da servizi esterni al momento dell'uso.
+
+Versione usata: 2.45.4
