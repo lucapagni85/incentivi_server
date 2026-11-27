@@ -1,4 +1,4 @@
-/* dati.js - V.08.01
+/* dati.js - V.09.00
    UNICO file che conosce Supabase. Per passare al server dell'Ente
    si modifica solo questo file (e config.js). */
 (function (root) {

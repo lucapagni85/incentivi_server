@@ -1,4 +1,4 @@
-/* auth.js - V.08.01 - stato dell'utente e permessi di navigazione.
+/* auth.js - V.09.00 - stato dell'utente e permessi di navigazione.
    Il menu e' una comodita': la protezione vera e' nel database (RLS). */
 (function (root) {
   'use strict';

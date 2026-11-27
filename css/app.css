@@ -1,4 +1,4 @@
-/* app.css - V.08.01 */
+/* app.css - V.09.00 */
 :root{--blu:#1F3864;--azz:#D9E1F2;--grigio:#f4f5f7;--bordo:#cfd4dc;--ok:#2e7d32;--err:#c62828;--warn:#b26a00}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -47,3 +47,40 @@ table.t td.st{width:28px;font-size:16px}
 .toast{padding:10px 14px;border-radius:6px;color:#fff;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .toast.err{background:var(--err)}.toast.ok{background:var(--ok)}.toast.info{background:#455a64}
 pre.cfg{background:var(--grigio);padding:8px;border-radius:6px;overflow:auto;font-size:13px}
+
+/* ---- step 3: procedure ---- */
+.lp{display:inline-block;padding:1px 9px;border-radius:10px;border:1px solid rgba(0,0,0,.16);font-size:.92em;color:#1c2430;white-space:nowrap}
+.tool{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:flex-end}
+.tool .fl{margin:0;font-size:12px;color:#555}
+.tool .fl select,.tool .fl input{display:block;margin-top:2px;padding:6px;border:1px solid var(--bordo);border-radius:6px;background:#fff;min-width:130px}
+.tool .fl.q input{min-width:260px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.chip{padding:3px 11px;border:1px solid var(--bordo);border-radius:14px;background:#fff;cursor:pointer;font-size:13px}
+.chip.on{background:var(--blu);color:#fff;border-color:var(--blu)}
+.conta{margin:12px 2px 6px;font-size:13px;color:#444}
+.twrap{overflow-x:auto;background:#fff;border:1px solid var(--bordo);border-radius:8px;margin-bottom:14px}
+table.pt{border-collapse:collapse;width:100%;font-size:13px;min-width:1100px}
+table.pt th{background:var(--azz);padding:7px 8px;text-align:left;white-space:nowrap;border-bottom:1.5px solid var(--blu)}
+table.pt th.sort{cursor:pointer;user-select:none}
+table.pt th.sort:hover{background:#c5d1ea}
+table.pt td{padding:6px 8px;border-bottom:1px solid #e6e8ec;vertical-align:top}
+table.pt tbody tr{cursor:pointer}
+table.pt tbody tr:hover{background:#f3f6fb}
+table.pt td.n,table.pt th.n{text-align:right;white-space:nowrap}
+table.pt td.c{text-align:center}
+table.pt td.cs{font-weight:bold;white-space:nowrap}
+table.pt td.tit{min-width:260px;max-width:420px}
+table.pt td.mod{white-space:nowrap;font-size:12px}
+.gh{margin:18px 2px 6px;font-size:16px;color:var(--blu)}
+.gh small{font-weight:normal;color:#555;font-size:13px}
+.overlay{position:fixed;inset:0;background:rgba(20,30,50,.5);z-index:40;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;overflow:auto}
+.dlg{background:#fff;border-radius:10px;max-width:760px;width:100%;padding:20px 22px;border-top:5px solid var(--blu)}
+.dlg h2{margin:0 0 6px;font-size:19px;color:var(--blu)}
+.dlg .kv{display:grid;grid-template-columns:170px 1fr;gap:5px 12px;margin:10px 0;font-size:14px}
+.dlg .kv dt{color:#555}.dlg .kv dd{margin:0;overflow-wrap:anywhere}
+.dlg .az{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.dlg textarea,.dlg select,.dlg input[type=text]{width:100%;padding:8px;border:1px solid var(--bordo);border-radius:6px;background:#fff}
+.dlg textarea{min-height:80px;resize:vertical}
+a.btn{text-decoration:none;color:inherit;display:inline-block}
+a.btn.p{color:#fff}
+.sep{border:0;border-top:1px solid var(--bordo);margin:12px 0}

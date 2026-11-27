@@ -1,10 +1,15 @@
-/* app.js - V.08.01 - schermate, menu e navigazione */
+/* app.js - V.09.00 - schermate, menu e navigazione */
 (function () {
   'use strict';
   const H = UI.H;
-  const VERSIONE = 'V.08.01';
-  const SCHEMA_RICHIESTO = '1.2';
+  const VERSIONE = 'V.09.00';
+  const SCHEMA_RICHIESTO = '1.3';
   const STORICO = [
+    { v: 'V.09.00', d: '26/11/2026', m: [
+      'Pagina Procedure: elenco di tutte le procedure con stato di liquidazione (cinque categorie colorate, avvisi sulle incoerenze), ricerca per CIG, titolo, gruppo e CUP, filtri per macrocartella (anche più d\'una), tipo, stato, CRE, schede BASE/MC e blocco, ordinamento per colonna, vista per macrocartella con subtotali.',
+      'Selettore Titolo «Sintetico / Completo» (stessa funzione dell\'Estrattore V.07.06), con scelta ricordata dal browser.',
+      'Dettaglio della procedura con sblocco e blocco (nota nel registro modifiche) e creazione di una nuova procedura.',
+      'Schede con suffisso -2 (BASE-2, MC1-2). Schema database richiesto: 1.3 (script 04); dati di prova: script 05.'] },
     { v: 'V.08.01', d: '26/11/2026', m: ['Configurazione del progetto Supabase già inserita in config.js; l\'indirizzo del progetto viene accettato anche con /rest/v1/ finale.'] },
     { v: 'V.08.00', d: '26/11/2026', m: [
       'Prima versione dell\'applicazione unica con server (Supabase): accesso con email e password, ruoli lettore e admin, menu e navigazione.',
@@ -13,7 +18,6 @@
   ];
   const MENU = [['procedure', 'Procedure'], ['generatore', 'Generatore'], ['estrattore', 'Estrattore'], ['amministrazione', 'Amministrazione'], ['diagnostica', 'Diagnostica']];
   const SEGNAPOSTO = {
-    procedure: ['Procedure', 'step 3', 'Anagrafica grafica di tutte le procedure salvate: stato di liquidazione, filtri per CIG e macrocartella, modifica del gruppo.'],
     generatore: ['Generatore', 'step 4', 'Creazione e modifica del gruppo di lavoro, cronoprogramma e liquidazione, con salvataggio su database e controllo dei conflitti.'],
     estrattore: ['Estrattore', 'step 5', 'Schede per soggetto, report di liquidazione e vista completa di una procedura, calcolati dai dati del database.'],
     amministrazione: ['Amministrazione', 'step 6', 'Anagrafica soggetti, macrocartelle, utenti e ruoli, eliminazione delle procedure, registro delle modifiche.']
@@ -78,9 +82,12 @@
     if (!Auth.puoVedere(r)) { r = Auth.rottaIniziale(); location.replace('#/' + r); return; }
     document.getElementById('menu').innerHTML = MENU.filter(m => Auth.puoVedere(m[0])).map(m => '<a href="#/' + m[0] + '"' + (m[0] === r ? ' class="on"' : '') + '>' + m[1] + '</a>').join('');
     const box = document.getElementById('pagina');
+    box.onclick = box.oninput = box.onchange = null;
+    if (r === 'procedure') { PaginaProcedure.render(box); return; }
     if (r === 'diagnostica') { paginaDiagnostica(box); return; }
-    const s = SEGNAPOSTO[r];
-    box.innerHTML = '<div class="panel"><h2>' + H(s[0]) + '</h2><p>' + H(s[2]) + '</p><p class="hint">Sezione in preparazione (' + H(s[1]) + ').</p></div>';
+    const s = SEGNAPOSTO[r], pid = (location.hash || '').replace(/^#\/?/, '').split('/')[1];
+    box.innerHTML = '<div class="panel"><h2>' + H(s[0]) + '</h2><p>' + H(s[2]) + '</p><p class="hint">Sezione in preparazione (' + H(s[1]) + ').</p>' +
+      (r === 'generatore' && pid ? '<div class="msg ok">Procedura selezionata: ' + H(pid) + ' — l\'apertura nel Generatore sarà attiva dallo step 4.</div>' : '') + '</div>';
   }
 
   /* ---------- diagnostica (solo admin) ---------- */
