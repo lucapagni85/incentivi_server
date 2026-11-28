@@ -1,4 +1,4 @@
-/* generatore.js - V.10.00 - Generatore su database (consegna 4A).
+/* generatore.js - V.10.01 - Generatore su database (consegna 4B: Excel, stampa, registro modifiche).
    Schermate, calcoli e controlli ripresi dal Generatore V.07.04 (js/core.js identico); cambia solo
    da dove arrivano e dove vanno i dati: Supabase tramite js/dati.js, niente piu' file Excel di lavoro. */
 (function (root) {
@@ -11,10 +11,10 @@
   const TIPI = ['LAVORI', 'SERVIZI', 'SERVIZI SPECIALI'];
   const TIPO_LABEL = { 'LAVORI': 'Lavori', 'SERVIZI': 'Servizi e forniture', 'SERVIZI SPECIALI': 'Servizi e forniture speciali' };
   const TIPOLOGIE = { 'LAVORI': ['LAVORI_aff dir / negoziate', 'LAVORI_AQ', 'LAVORI_SOMME URGENZE'], 'SERVIZI': ['SERVIZI', 'FORNITURE'], 'SERVIZI SPECIALI': ['SERVIZI', 'FORNITURE'] };
-  const HTML_GEN = "\n  <div id=\"gbar\" class=\"panel gbar\"><div><div class=\"gt\" id=\"gTit\"></div><div id=\"gStato\"></div></div><div class=\"gx\"><button class=\"b\" id=\"gIndietro\">\u2190 Procedure</button><button class=\"b\" id=\"gRicarica\" title=\"Rilegge la procedura dal server\">Ricarica dal server</button><button class=\"b p\" id=\"gSalva\" disabled>Salva</button></div></div>\n  <div id=\"gLock\" class=\"msg warn\" hidden></div>\n  <div id=\"avvisi\" class=\"panel\" hidden></div>\n  <nav class=\"tabs\">\n    <button data-tab=\"1\" class=\"on\">1 \u00b7 Anagrafica</button>\n    <button data-tab=\"2\">2 \u00b7 Gruppo di lavoro</button>\n    <button data-tab=\"3\">3 \u00b7 Cronoprogramma e liquidazione</button>\n    <button data-tab=\"4\">4 \u00b7 Verifica</button>\n  </nav>\n\n  <section id=\"p1\">\n    <div class=\"panel\">\n      <label for=\"f_tipo\">Tipo di appalto</label>\n      <select id=\"f_tipo\"><option value=\"LAVORI\">Lavori</option><option value=\"SERVIZI\">Servizi e forniture</option><option value=\"SERVIZI SPECIALI\">Servizi e forniture speciali</option></select>\n      <label for=\"f_titolo\">Titolo / denominazione dell'intervento</label>\n      <textarea id=\"f_titolo\" data-t=\"titolo\"></textarea>\n      <div class=\"grid\">\n        <div><label for=\"f_cig\">CIG</label><input id=\"f_cig\" data-t=\"cig\" maxlength=\"10\" autocapitalize=\"characters\"></div>\n        <div><label for=\"f_cup\">CUP</label><input id=\"f_cup\" data-t=\"cup\" maxlength=\"15\" autocapitalize=\"characters\"></div>\n        <div><label for=\"f_base\">Base di calcolo (\u20ac, IVA esclusa)</label><input id=\"f_base\" data-t=\"base\" type=\"number\" min=\"0\" step=\"0.01\" inputmode=\"decimal\"></div>\n        <div><label for=\"f_tipologia\">Tipologia di intervento</label>\n          <select id=\"f_tipologia\" data-t=\"tipologia\"></select></div>\n        <div><label for=\"f_risorse\">Tipo di risorse</label>\n          <select id=\"f_risorse\" data-t=\"risorse\"><option>NON VINCOLATE</option><option>VINCOLATE</option><option>MISTE</option></select></div>\n        <div><label for=\"f_innov\">% fondo innovazione applicabile (art. 7)</label><input id=\"f_innov\" data-t=\"innov\" type=\"number\" min=\"0\" max=\"100\" step=\"0.01\"></div>\n        <div><label for=\"f_versione\">Versione</label><input id=\"f_versione\" data-t=\"versione\"></div>\n        <div><label for=\"f_scheda\">Scheda (BASE oppure MC1, MC2\u2026; -2 per una seconda procedura con lo stesso CIG)</label><input id=\"f_scheda\" data-t=\"scheda\" list=\"schede\" autocapitalize=\"characters\"></div>\n        <div><label for=\"f_data\">Data</label><input id=\"f_data\" data-t=\"data\" type=\"date\"></div>\n        <div><label for=\"f_macro\">Macrocartella</label><select id=\"f_macro\" data-m=\"macrocartella_id\"></select></div>\n        <div><label for=\"f_gruppo\">Nome gruppo (testo libero)</label><input id=\"f_gruppo\" data-m=\"nome_gruppo\" placeholder=\"es. AQ ponti 2026\"></div>\n      </div>\n      <div id=\"avvisoBase\" class=\"warnc\" style=\"margin-top:10px\"></div>\n      <div class=\"live\" id=\"live\"></div>\n    </div>\n  </section>\n\n  <section id=\"p2\" hidden>\n    <div class=\"panel\"><b>Gruppo di lavoro.</b> Per ogni sub-attivit\u00e0 indica chi la svolge, lo stato e la quota di ciascuno (la somma delle quote deve fare 100%). La % effettiva pu\u00f2 variare al massimo del \u00b120% rispetto alla tabella (art. 12 c. 7), lasciando invariato il totale.\n      <div id=\"sumPct\" style=\"margin-top:8px\"></div>\n      <div id=\"nonRis\" style=\"margin-top:8px\"></div>\n      <div style=\"margin-top:8px\"><button class=\"b\" id=\"gNuovoSogg\">+ Nuovo soggetto in anagrafica\u2026</button> <span class=\"rng\">Le persone si scelgono dall'anagrafica: un nuovo assunto si aggiunge da qui. Gli esterni usano il soggetto generico \u00abEsterno\u00bb.</span></div>\n      <div class=\"rng\" style=\"margin-top:6px;font-size:13px\">L'importo a destra della quota \u00e8 il <b>lordo</b> della persona su quella riga (colonna J dell'Excel); le righe non \u00abInterno\u00bb sono in grigio.</div></div>\n    <div id=\"groups\"></div>\n    <div class=\"panel\" id=\"totLordo\"></div>\n  </section>\n\n  <section id=\"p3\" hidden>\n    <div class=\"panel\"><b>Cronoprogramma.</b> Per ogni fase puoi scrivere testo libero (date, estremi dell'atto, note). Resta salvato nel database e compare in stampa solo se compilato. Resta modificabile anche dopo la liquidazione.</div>\n    <div class=\"panel\" id=\"cronoBox\"></div>\n    <div class=\"panel\" id=\"liqBox\"><h3 style=\"margin-top:0\">Liquidazione</h3>\n      <div class=\"grid\">\n        <div><label for=\"l_cre\">CRE approvato</label><select id=\"l_cre\" data-m=\"cre\"><option>NO</option><option>SI</option></select></div>\n        <div><label for=\"l_lb\">% liquidabile (cumulativa)</label><input id=\"l_lb\" data-m=\"lb\" type=\"number\" min=\"0\" max=\"100\" step=\"0.0001\"></div>\n        <div><label for=\"l_lq\">% liquidata (cumulativa)</label><input id=\"l_lq\" data-m=\"lq\" type=\"number\" min=\"0\" max=\"100\" step=\"0.0001\"></div>\n        <div><label for=\"l_data\">Data aggiornamento</label><input id=\"l_data\" data-m=\"data_liq\" type=\"date\"></div>\n      </div>\n      <label for=\"l_note\">Note</label><textarea id=\"l_note\" data-m=\"note_liq\"></textarea>\n      <div id=\"liqOut\" style=\"margin-top:10px\"></div>\n    </div>\n  </section>\n\n  <section id=\"p4\" hidden>\n    <div class=\"panel\"><h3 style=\"margin-top:0\">Verifiche</h3><ul class=\"chk\" id=\"checks\"></ul></div>\n    <div class=\"panel\"><h3 style=\"margin-top:0\">Anteprima importi</h3><table class=\"r\" id=\"riep\"></table></div>\n    <div class=\"panel\"><p>Le modifiche si salvano con il pulsante <b>Salva</b> in alto. Esportazione in Excel, stampa e registro delle modifiche arrivano nella prossima consegna.</p><div id=\"avvisoErr\"></div></div>\n  </section>\n\n<datalist id=\"rubrica\"></datalist>\n<datalist id=\"schede\"><option value=\"BASE\"><option value=\"BASE-2\"><option value=\"MC1\"><option value=\"MC2\"><option value=\"MC3\"><option value=\"MC4\"></datalist>\n";
+  const HTML_GEN = "\n  <div id=\"gbar\" class=\"panel gbar\"><div><div class=\"gt\" id=\"gTit\"></div><div id=\"gStato\"></div></div><div class=\"gx\"><button class=\"b\" id=\"gIndietro\">\u2190 Procedure</button><button class=\"b\" id=\"gRicarica\" title=\"Rilegge la procedura dal server\">Ricarica dal server</button><button class=\"b p\" id=\"gSalva\" disabled>Salva</button></div></div>\n  <div id=\"gLock\" class=\"msg warn\" hidden></div>\n  <div id=\"avvisi\" class=\"panel\" hidden></div>\n  <nav class=\"tabs\">\n    <button data-tab=\"1\" class=\"on\">1 \u00b7 Anagrafica</button>\n    <button data-tab=\"2\">2 \u00b7 Gruppo di lavoro</button>\n    <button data-tab=\"3\">3 \u00b7 Cronoprogramma e liquidazione</button>\n    <button data-tab=\"4\">4 \u00b7 Verifica e genera</button>\n  </nav>\n\n  <section id=\"p1\">\n    <div class=\"panel\">\n      <label for=\"f_tipo\">Tipo di appalto</label>\n      <select id=\"f_tipo\"><option value=\"LAVORI\">Lavori</option><option value=\"SERVIZI\">Servizi e forniture</option><option value=\"SERVIZI SPECIALI\">Servizi e forniture speciali</option></select>\n      <label for=\"f_titolo\">Titolo / denominazione dell'intervento</label>\n      <textarea id=\"f_titolo\" data-t=\"titolo\"></textarea>\n      <div class=\"grid\">\n        <div><label for=\"f_cig\">CIG</label><input id=\"f_cig\" data-t=\"cig\" maxlength=\"10\" autocapitalize=\"characters\"></div>\n        <div><label for=\"f_cup\">CUP</label><input id=\"f_cup\" data-t=\"cup\" maxlength=\"15\" autocapitalize=\"characters\"></div>\n        <div><label for=\"f_base\">Base di calcolo (\u20ac, IVA esclusa)</label><input id=\"f_base\" data-t=\"base\" type=\"number\" min=\"0\" step=\"0.01\" inputmode=\"decimal\"></div>\n        <div><label for=\"f_tipologia\">Tipologia di intervento</label>\n          <select id=\"f_tipologia\" data-t=\"tipologia\"></select></div>\n        <div><label for=\"f_risorse\">Tipo di risorse</label>\n          <select id=\"f_risorse\" data-t=\"risorse\"><option>NON VINCOLATE</option><option>VINCOLATE</option><option>MISTE</option></select></div>\n        <div><label for=\"f_innov\">% fondo innovazione applicabile (art. 7)</label><input id=\"f_innov\" data-t=\"innov\" type=\"number\" min=\"0\" max=\"100\" step=\"0.01\"></div>\n        <div><label for=\"f_versione\">Versione</label><input id=\"f_versione\" data-t=\"versione\"></div>\n        <div><label for=\"f_scheda\">Scheda (BASE oppure MC1, MC2\u2026; -2 per una seconda procedura con lo stesso CIG)</label><input id=\"f_scheda\" data-t=\"scheda\" list=\"schede\" autocapitalize=\"characters\"></div>\n        <div><label for=\"f_data\">Data</label><input id=\"f_data\" data-t=\"data\" type=\"date\"></div>\n        <div><label for=\"f_macro\">Macrocartella</label><select id=\"f_macro\" data-m=\"macrocartella_id\"></select></div>\n        <div><label for=\"f_gruppo\">Nome gruppo (testo libero)</label><input id=\"f_gruppo\" data-m=\"nome_gruppo\" placeholder=\"es. AQ ponti 2026\"></div>\n      </div>\n      <div id=\"avvisoBase\" class=\"warnc\" style=\"margin-top:10px\"></div>\n      <div class=\"live\" id=\"live\"></div>\n    </div>\n  </section>\n\n  <section id=\"p2\" hidden>\n    <div class=\"panel\"><b>Gruppo di lavoro.</b> Per ogni sub-attivit\u00e0 indica chi la svolge, lo stato e la quota di ciascuno (la somma delle quote deve fare 100%). La % effettiva pu\u00f2 variare al massimo del \u00b120% rispetto alla tabella (art. 12 c. 7), lasciando invariato il totale.\n      <div id=\"sumPct\" style=\"margin-top:8px\"></div>\n      <div id=\"nonRis\" style=\"margin-top:8px\"></div>\n      <div style=\"margin-top:8px\"><button class=\"b\" id=\"gNuovoSogg\">+ Nuovo soggetto in anagrafica\u2026</button> <span class=\"rng\">Le persone si scelgono dall'anagrafica: un nuovo assunto si aggiunge da qui. Gli esterni usano il soggetto generico \u00abEsterno\u00bb.</span></div>\n      <div class=\"rng\" style=\"margin-top:6px;font-size:13px\">L'importo a destra della quota \u00e8 il <b>lordo</b> della persona su quella riga (colonna J dell'Excel); le righe non \u00abInterno\u00bb sono in grigio.</div></div>\n    <div id=\"groups\"></div>\n    <div class=\"panel\" id=\"totLordo\"></div>\n  </section>\n\n  <section id=\"p3\" hidden>\n    <div class=\"panel\"><b>Cronoprogramma.</b> Per ogni fase puoi scrivere testo libero (date, estremi dell'atto, note). Resta salvato nel database e compare in stampa solo se compilato. Resta modificabile anche dopo la liquidazione.</div>\n    <div class=\"panel\" id=\"cronoBox\"></div>\n    <div class=\"panel\" id=\"liqBox\"><h3 style=\"margin-top:0\">Liquidazione</h3>\n      <div class=\"grid\">\n        <div><label for=\"l_cre\">CRE approvato</label><select id=\"l_cre\" data-m=\"cre\"><option>NO</option><option>SI</option></select></div>\n        <div><label for=\"l_lb\">% liquidabile (cumulativa)</label><input id=\"l_lb\" data-m=\"lb\" type=\"number\" min=\"0\" max=\"100\" step=\"0.0001\"></div>\n        <div><label for=\"l_lq\">% liquidata (cumulativa)</label><input id=\"l_lq\" data-m=\"lq\" type=\"number\" min=\"0\" max=\"100\" step=\"0.0001\"></div>\n        <div><label for=\"l_data\">Data aggiornamento</label><input id=\"l_data\" data-m=\"data_liq\" type=\"date\"></div>\n      </div>\n      <label for=\"l_note\">Note</label><textarea id=\"l_note\" data-m=\"note_liq\"></textarea>\n      <div id=\"liqOut\" style=\"margin-top:10px\"></div>\n    </div>\n  </section>\n\n  <section id=\"p4\" hidden>\n    <div class=\"panel\"><h3 style=\"margin-top:0\">Verifiche</h3><ul class=\"chk\" id=\"checks\"></ul></div>\n    <div class=\"panel\"><h3 style=\"margin-top:0\">Anteprima importi</h3><table class=\"r\" id=\"riep\"></table></div>\n    <div class=\"panel\"><label for=\"f_file\">Nome del file Excel</label><input id=\"f_file\">\n      <p style=\"margin-top:14px\"><button class=\"b p\" id=\"gGenera\">Genera e scarica Excel</button> <button class=\"b\" id=\"gStampa\">Stampa / Salva in PDF</button></p>\n      <p class=\"rng\" style=\"font-size:13px\">Prima di scaricare o stampare le modifiche vengono salvate. Nel file Excel e nel PDF non compaiono avvisi: le verifiche restano solo a video.</p>\n      <div id=\"avvisoErr\"></div><div id=\"genMsg\" style=\"margin-top:6px\"></div></div>\n    <div class=\"panel\" id=\"regBox\" hidden><h3 style=\"margin-top:0\">Registro delle modifiche</h3><div id=\"regOut\"><p class=\"hint\">Caricamento…</p></div></div>\n  </section>\n\n<datalist id=\"rubrica\"></datalist>\n<datalist id=\"schede\"><option value=\"BASE\"><option value=\"BASE-2\"><option value=\"MC1\"><option value=\"MC2\"><option value=\"MC3\"><option value=\"MC4\"></datalist>\n";
   let GEN = null, TPL = null, S = null, REGOLE = null, TIPO = 'LAVORI', tab = 1;
   let TPLS = null; const REGOLES = {}; const REGOLE_ORIGINE = 'regole incorporate';
-  let CUR = null, DIRTY = false, LOCK = false, SALVANDO = false, TOKEN = 0, MACRO = [];
+  let FILE_MAN = false, CUR = null, DIRTY = false, LOCK = false, SALVANDO = false, TOKEN = 0, MACRO = [];
   let SOGG = [], SOGG_ID = {}, SOGG_NOME = {}, GENERICO = null;
   const EV = []; const on = (t, f) => EV.push([t, f]);
   const $ = s => GEN.querySelector(s), $$ = s => Array.from(GEN.querySelectorAll(s));
@@ -113,7 +113,7 @@
   function setTab(n) {
     tab = n; $$('.tabs button').forEach(b => b.classList.toggle('on', +b.dataset.tab === n));
     [1, 2, 3, 4].forEach(k => $('#p' + k).hidden = k !== n);
-    if (n === 4) refresh();
+    if (n === 4) { refresh(); const f = $('#f_file'); if (f && !FILE_MAN) f.value = nomeFile(); caricaRegistro(); }
   }
   function nomeFile() { return ('INCENTIVI_' + (S.testata.cig || 'SENZA-CIG') + (S.testata.scheda && S.testata.scheda !== 'BASE' ? '_' + S.testata.scheda : '') + '_' + (S.testata.versione || 'REV_00')).replace(/[^\w.\-]+/g, '_') + '.xlsx'; }
 
@@ -198,7 +198,7 @@
     if (tab === 4) {
       const ck = checks(c), ne = ck.filter(o => o.l === 'err').length;
       $('#checks').innerHTML = ck.map(o => '<li class="' + o.l + '">' + H(o.x) + '</li>').join('');
-      $('#avvisoErr').innerHTML = ne ? '<span class="errc">Sono presenti ' + ne + ' errori: puoi comunque salvare e stampare, gli errori restano segnalati (nella stampa compaiono in un riquadro).</span>' : '';
+      $('#avvisoErr').innerHTML = ne ? '<span class="errc">Sono presenti ' + ne + ' errori: puoi comunque salvare, scaricare e stampare: gli errori restano segnalati solo a video e non compaiono nel file Excel né nel PDF.</span>' : '';
       const rows = [['Percentuale applicata', pct(c.B26)], ['Importo fondo incentivo', eur(c.B27)], ['Quota personale', eur(c.B28)], ['Economie (lordo)', eur(c.B30)],
         ['Da impegnare al personale interno', eur(c.B31)], ['Fondo innovazione da impegnare', eur(c.B32)], ['Totale lordo assegnato', eur(c.B33)],
         ['Totale netto', eur(c.B34)], ['Oneri riflessi', eur(c.B35)], ['IRAP', eur(c.B36)]];
@@ -208,6 +208,7 @@
 
   on('input', e => {
     const el = e.target;
+    if (el.id === 'f_file') { FILE_MAN = true; return; }
     if (LOCK && !(el.dataset && (el.dataset.m !== undefined || el.dataset.cr !== undefined))) return;
     if (el.dataset && el.dataset.m !== undefined) { metaInput(el); return; }
     if (el.dataset && el.dataset.t) {
@@ -281,7 +282,7 @@
     const dIt = d => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : ''; };
     const nn = n => (Number(n) || 0).toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const ee = n => (Number(n) || 0) === 0 ? '' : nn(n);
-    const lg = document.querySelector('header.top img.logo'), logo = (lg && !lg.hidden && lg.src) ? '<img class="plogo" src="' + lg.src + '">' : '';
+    const lg = document.querySelector('header.top img.logo'), logo = (lg && lg.complete && lg.naturalWidth > 0 && lg.src) ? '<img class="plogo" src="' + lg.src + '">' : '';
     let h = '<div class="pr"><div class="ph">' + logo + '<div><div class="ente">Provincia di Pisa</div><div class="set">Settore Viabilità trasporti e protezione civile</div><h1>Incentivi funzioni tecniche – ripartizione dell\'incentivo</h1><div class="nm">art. 45 D.Lgs. 36/2023 e Regolamento della Provincia di Pisa</div></div></div>';
     h += '<h2>Dati dell\'intervento</h2><table class="kv"><tr><td>Titolo</td><td colspan="3">' + H(t.titolo) + '</td></tr>' +
       '<tr><td>CIG</td><td>' + H(t.cig) + '</td><td style="width:14%;background:#F6F7F9;font-weight:bold">CUP</td><td>' + H(t.cup) + '</td></tr>' +
@@ -335,7 +336,7 @@
         return '<tr><td>' + H(f) + '</td><td>' + dd(cr[0]) + '</td><td>' + dd(cr[1]) + '</td><td>' + dd(cr[2]) + '</td><td>' + dd(cr[3]) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
     const now = new Date();
-    h += '<div class="ft">Stampato il ' + now.toLocaleDateString('it-IT') + ' alle ' + now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + ' · CIG ' + H(t.cig) + ' · versione ' + H(t.versione) + ' · tracciato ' + H(TPL.tracciato) + ' · programma ' + VERSIONE + '<br>© 2026 Provincia di Pisa · Sviluppato da Ing. Luca Pagni</div></div>';
+    h += '<div class="ft">Stampato il ' + now.toLocaleDateString('it-IT') + ' alle ' + now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) + ' · CIG ' + H(t.cig) + ' · versione ' + H(t.versione) + ' · tracciato ' + H(TPL.tracciato) + ' · programma ' + ((root.__app && root.__app.VERSIONE) || 'V.10.01') + '<br>© 2026 Provincia di Pisa · Sviluppato da Ing. Luca Pagni</div></div>';
     return h;
   }
 
@@ -523,13 +524,14 @@
   }
   const hasEsterno = () => S.subs.some((s, i) => Core.itemsOf(TPL, S, i).some(({ r }) => r.stato === 'Esterno'));
   async function salva() {
-    if (SALVANDO || !DIRTY) return;
+    if (SALVANDO) return false;
+    if (!DIRTY) return true;
     const nr = nonRisolti();
-    if (nr.length) { UI.toast('Nominativi non in anagrafica: ' + nr.join(', ') + '. Scegli dall\'elenco o aggiungili all\'anagrafica.', 'err'); setTab(2); return; }
+    if (nr.length) { UI.toast('Nominativi non in anagrafica: ' + nr.join(', ') + '. Scegli dall\'elenco o aggiungili all\'anagrafica.', 'err'); setTab(2); return false; }
     if (!LOCK) {
-      if (!String(S.testata.cig || '').trim()) { UI.toast('Il CIG è obbligatorio.', 'err'); setTab(1); return; }
-      if (!SCHEDA_RE.test(S.testata.scheda || 'BASE')) { UI.toast('Scheda non valida: BASE oppure MC1, MC2… (con eventuale suffisso -2).', 'err'); setTab(1); return; }
-      if (hasEsterno() && !GENERICO) { UI.toast('Manca il soggetto generico «Esterno» in anagrafica (script SQL 03).', 'err'); return; }
+      if (!String(S.testata.cig || '').trim()) { UI.toast('Il CIG è obbligatorio.', 'err'); setTab(1); return false; }
+      if (!SCHEDA_RE.test(S.testata.scheda || 'BASE')) { UI.toast('Scheda non valida: BASE oppure MC1, MC2… (con eventuale suffisso -2).', 'err'); setTab(1); return false; }
+      if (hasEsterno() && !GENERICO) { UI.toast('Manca il soggetto generico «Esterno» in anagrafica (script SQL 03).', 'err'); return false; }
     }
     SALVANDO = true; aggiornaBarra();
     try {
@@ -541,7 +543,9 @@
       CUR = await Dati.salvaProcedura(payload); DIRTY = false; LOCK = Liq.bloccata(CUR);
       UI.toast('Salvato.', 'ok');
       if (LOCK !== eraBloccata) { if (LOCK) UI.toast('Procedura bloccata: già liquidata. Per modificare il gruppo serve lo sblocco.', 'info'); renderAll(); }
-    } catch (e) { erroreSalvataggio(e); }
+      if (tab === 4) caricaRegistro();
+      return true;
+    } catch (e) { erroreSalvataggio(e); return false; }
     finally { SALVANDO = false; if (GEN) aggiornaBarra(); }
   }
   function erroreSalvataggio(e) {
@@ -577,6 +581,8 @@
   function clickExtra(b) {
     switch (b.id) {
       case 'gSalva': salva(); return true;
+      case 'gGenera': conSalvataggio('scaricare il file Excel', scaricaExcel); return true;
+      case 'gStampa': conSalvataggio('stampare', stampa); return true;
       case 'gRicarica': ricaricaDaServer(false); return true;
       case 'gIndietro': location.hash = '#/procedure'; return true;
       case 'gNuovoSogg': dialogSoggetto(''); return true;
@@ -584,6 +590,7 @@
       case 'gBlocca': bloccoDialog(false); return true;
       case 'chiudiAvvisi': $('#avvisi').hidden = true; return true;
     }
+    if (b.dataset.reg !== undefined) { confrontaReg(b.dataset.reg); return true; }
     if (b.dataset.add !== undefined) { dialogSoggetto(b.dataset.add); return true; }
     return false;
   }
@@ -596,6 +603,132 @@
     S = nuovoStato(t, vecchia); S.meta = meta; if (vcrono) S.crono = vcrono; setTipo(t); save(); renderAll();
   }
   on('change', e => { if (e.target.id === 'f_tipo' && !LOCK) cambiaTipo(e.target.value); });
+
+
+  /* =================== NOVITA' V.10.01 (Excel, stampa, registro modifiche) =================== */
+
+  /* Prima di scaricare o stampare si chiede sempre di salvare le modifiche pendenti. */
+  function conSalvataggio(verbo, azione) {
+    if (!DIRTY) { azione(); return; }
+    const d = UI.modal('<h2>Salvare le modifiche?</h2><p>Ci sono modifiche non salvate. Prima di ' + H(verbo) + ' vanno salvate, così il documento corrisponde ai dati nel database.</p>' +
+      '<div class="az"><button class="btn p" data-a="s">Salva e continua</button><button class="btn" data-a="x">Annulla</button></div>');
+    d.onclick = async ev => {
+      const a = ev.target.closest('[data-a]'); if (!a) return;
+      if (a.dataset.a === 'x') { UI.chiudiModal(); return; }
+      a.disabled = true;
+      const ok = await salva();
+      if (d.isConnected) UI.chiudiModal();     // se il salvataggio ha aperto un altro dialogo (conflitto) non lo chiudo
+      if (ok && GEN) azione();
+    };
+  }
+
+  /* stato per l'Excel: nel file i nominativi sono testo (dall'anagrafica); l'esterno e' sempre «Esterno» */
+  function statoPerExcel() {
+    const st = JSON.parse(JSON.stringify(S));
+    righeDi(st, r => {
+      if (r.stato === 'Interno') { const so = SOGG_ID[r.sid]; r.nom = so ? nomeCompleto(so) : String(r.nom || ''); }
+      else if (r.stato === 'Esterno') r.nom = 'Esterno';
+      else r.nom = '';
+    });
+    return st;
+  }
+  async function scaricaExcel() {
+    const msg = $('#genMsg');
+    try {
+      const out = await Core.generate(TPL, statoPerExcel());
+      let nome = (($('#f_file') && $('#f_file').value) || nomeFile()).trim(); if (!/\.xlsx$/i.test(nome)) nome += '.xlsx';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+      a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+      if (msg) msg.innerHTML = '<span class="ok">File generato: ' + H(nome) + '</span>';
+    } catch (e) { if (msg) msg.innerHTML = '<span class="errc">Errore nella generazione: ' + H(e.message) + '</span>'; }
+  }
+  function stampa() {
+    let pa = document.getElementById('printArea');
+    if (!pa) { pa = document.createElement('div'); pa.id = 'printArea'; document.body.appendChild(pa); }
+    pa.innerHTML = stampaHtml();
+    window.addEventListener('afterprint', () => { pa.innerHTML = ''; }, { once: true });
+    window.print();
+  }
+
+  /* ---------- registro delle modifiche (solo admin) ---------- */
+  const OP = { creazione: 'Creazione', modifica: 'Modifica', sblocco: 'Sblocco', blocco: 'Blocco', eliminazione: 'Eliminazione' };
+  const isAdmin = () => !!(root.Auth && Auth.ruolo && Auth.ruolo() === 'admin');
+  async function caricaRegistro() {
+    const box = $('#regBox'); if (!box) return;
+    if (!isAdmin()) { box.hidden = true; return; }
+    box.hidden = false;
+    const token = TOKEN, out = $('#regOut');
+    try {
+      const rows = await Dati.registro({ proceduraId: CUR.id, limite: 50 });
+      if (token !== TOKEN || !GEN) return;
+      out.innerHTML = rows.length ? '<table class="r reg"><thead><tr><th>Quando</th><th>Chi</th><th>Operazione</th><th>Nota</th><th></th></tr></thead><tbody>' +
+        rows.map(r => '<tr><td>' + H(UI.dataOra(r.at)) + '</td><td>' + H(r.utente_nome || '') + '</td><td>' + H(OP[r.operazione] || r.operazione) + '</td><td>' + H(r.nota || '') + '</td>' +
+          '<td>' + (r.operazione === 'eliminazione' ? '' : '<button class="b" data-reg="' + H(r.id) + '">Confronta</button>') + '</td></tr>').join('') + '</tbody></table>' +
+        '<p class="hint">Ultime ' + rows.length + ' operazioni, dalla più recente.</p>' : '<p class="hint">Nessuna operazione registrata.</p>';
+    } catch (e) { if (token === TOKEN && GEN) out.innerHTML = '<div class="msg err">' + H(e.message) + '</div>'; }
+  }
+  /* descrizione leggibile delle righe di una sub-attivita' (per il confronto) */
+  function nomeDaId(r) {
+    if (r.stato === 'Esterno') return 'Esterno';
+    if (r.stato === 'Interno') { const so = SOGG_ID[r.soggetto_id]; return so ? nomeCompleto(so) : (r.soggetto_id ? '(soggetto non più in anagrafica)' : '(nominativo mancante)'); }
+    return '—';
+  }
+  function righeTesto(sub) {
+    const out = [];
+    const rr = (r, pre) => out.push((pre ? pre + ' · ' : '') + nomeDaId(r) + (r.ruolo ? ' (' + r.ruolo + ')' : '') + ' · ' + r.stato + ' · quota ' + pct(Number(r.quota) || 0) + (r.note ? ' · nota: ' + r.note : ''));
+    if (sub.gruppi) sub.gruppi.forEach(g => (g.righe || []).forEach(r => rr(r, 'Sottogruppo «' + g.nome + '» ' + pct(Number(g.pct) || 0))));
+    else (sub.righe || []).forEach(r => rr(r, ''));
+    return out;
+  }
+  function differenze(pr, dp) {
+    const d = [], add = (c, a, b) => { if (String(a) !== String(b)) d.push([c, a, b]); };
+    const f = (x, k) => (x && x[k] != null && x[k] !== '') ? x[k] : '–';
+    const macro = id => { const m = MACRO.find(x => x.id === id); return id ? (m ? m.nome : '(altra macrocartella)') : '–'; };
+    const sino = v => v ? 'SI' : 'NO';
+    ['cig', 'scheda', 'nome_gruppo', 'tipo_appalto', 'titolo', 'cup'].forEach(k => add(k === 'nome_gruppo' ? 'Nome gruppo' : k === 'tipo_appalto' ? 'Tipo di appalto' : k.charAt(0).toUpperCase() + k.slice(1), f(pr, k), f(dp, k)));
+    add('Macrocartella', macro(pr.macrocartella_id), macro(dp.macrocartella_id));
+    add('Base di calcolo', pr.base == null ? '–' : UI.eur(pr.base), dp.base == null ? '–' : UI.eur(dp.base));
+    const tp = pr.dati && pr.dati.testata || {}, td = dp.dati && dp.dati.testata || {};
+    add('Tipologia', f(tp, 'tipologia'), f(td, 'tipologia')); add('Tipo di risorse', f(tp, 'risorse'), f(td, 'risorse'));
+    add('% fondo innovazione', tp.innov == null ? '–' : pct(tp.innov), td.innov == null ? '–' : pct(td.innov));
+    add('Versione (etichetta)', f(tp, 'versione'), f(td, 'versione')); add('Data', f(tp, 'data'), f(td, 'data'));
+    add('CRE approvato', sino(pr.cre_approvato), sino(dp.cre_approvato));
+    add('% liquidabile', UI.pct(pr.perc_liquidabile), UI.pct(dp.perc_liquidabile)); add('% liquidata', UI.pct(pr.perc_liquidata), UI.pct(dp.perc_liquidata));
+    add('Data liquidazione', f(pr, 'data_liquidazione'), f(dp, 'data_liquidazione')); add('Note liquidazione', f(pr, 'note_liquidazione'), f(dp, 'note_liquidazione'));
+    add('Sbloccata', sino(pr.sbloccata), sino(dp.sbloccata));
+    const sp = (pr.dati && pr.dati.subs) || [], sd = (dp.dati && dp.dati.subs) || [], tpl = TPLS[dp.tipo_appalto] || TPL;
+    const vuoto = !sp.length;     // stato precedente senza gruppo di lavoro salvato (procedura appena creata)
+    for (let i = 0; i < Math.max(sp.length, sd.length); i++) {
+      const nm = (tpl.subs[i] && tpl.subs[i].sub) || ('Attività ' + (i + 1)), a = vuoto ? { righe: [] } : sp[i], b = sd[i];
+      if (!a || !b) { add(nm, a ? 'presente' : 'assente', b ? 'presente' : 'assente'); continue; }
+      if (!vuoto && Math.abs((Number(a.pctEff) || 0) - (Number(b.pctEff) || 0)) > 1e-9) d.push([nm + ' – % effettiva', pct(Number(a.pctEff) || 0), pct(Number(b.pctEff) || 0)]);
+      const ra = righeTesto(a), rb = righeTesto(b).filter(x => !vuoto || x.indexOf('· Non previsto ·') < 0), cb = rb.slice();
+      const tolte = [];
+      ra.forEach(x => { const j = cb.indexOf(x); if (j >= 0) cb.splice(j, 1); else tolte.push(x); });
+      if (tolte.length || cb.length) d.push([nm, tolte.join('\n') || '–', cb.join('\n') || '–']);
+    }
+    const ca = (pr.dati && pr.dati.crono) || [], cn = (dp.dati && dp.dati.crono) || [], col = ['Scadenza prevista', 'Scadenza effettiva', 'Atto di approvazione', 'Note'], fasi = tpl.fasi || [];
+    for (let i = 0; i < Math.max(ca.length, cn.length); i++) for (let k = 0; k < 4; k++) {
+      const x = ca[i] && ca[i][k] != null && ca[i][k] !== '' ? ca[i][k] : '–', y = cn[i] && cn[i][k] != null && cn[i][k] !== '' ? cn[i][k] : '–';
+      add('Cronoprogramma · ' + (fasi[i] || 'fase ' + (i + 1)) + ' · ' + col[k], x, y);
+    }
+    return d;
+  }
+  async function confrontaReg(id) {
+    let r;
+    try { r = await Dati.registroDettaglio(id); } catch (e) { UI.errore(e); return; }
+    const cella = t => H(t).replace(/\n/g, '<br>');
+    let corpo;
+    if (!r.prima && r.dopo) corpo = '<p class="hint">Creazione della procedura: non c\'è uno stato precedente da confrontare.</p>';
+    else if (r.prima && r.dopo) {
+      const d = differenze(r.prima, r.dopo);
+      corpo = d.length ? '<div class="regdiff"><table class="r"><thead><tr><th>Campo</th><th>Prima</th><th>Dopo</th></tr></thead><tbody>' + d.map(x => '<tr><td>' + H(x[0]) + '</td><td>' + cella(x[1]) + '</td><td>' + cella(x[2]) + '</td></tr>').join('') + '</tbody></table></div>' : '<p class="hint">Nessuna differenza nei dati della procedura' + (r.nota ? ' (cambia soltanto lo stato di blocco registrato con la nota).' : '.') + '</p>';
+    } else corpo = '<p class="hint">Stato non disponibile.</p>';
+    const dlg = UI.modal('<h2>' + H(OP[r.operazione] || r.operazione) + ' · ' + H(UI.dataOra(r.at)) + '</h2><p>' + H(r.utente_nome || '') + (r.nota ? ' · nota: ' + H(r.nota) : '') + '</p>' + corpo + '<div class="az"><button class="btn" data-a="x">Chiudi</button></div>');
+    dlg.style.maxWidth = '920px'; dlg.style.width = '92vw';
+    dlg.onclick = ev => { if (ev.target.closest('[data-a]')) UI.chiudiModal(); };
+  }
 
   /* ---------- apertura e chiusura ---------- */
   const beforeUnload = e => { if (DIRTY) { e.preventDefault(); e.returnValue = ''; } };
@@ -617,7 +750,7 @@
     GEN = document.createElement('div'); GEN.id = 'gen'; GEN.innerHTML = HTML_GEN;
     box.innerHTML = ''; box.appendChild(GEN);
     EV.forEach(x => GEN.addEventListener(x[0], x[1]));
-    tab = 1; MACRO = r[2]; indicizza(r[1]); applicaRiga(r[0]);
+    tab = 1; FILE_MAN = false; MACRO = r[2]; indicizza(r[1]); applicaRiga(r[0]);
     window.addEventListener('beforeunload', beforeUnload);
   }
   function chiudi() { TOKEN++; DIRTY = false; GEN = null; window.removeEventListener('beforeunload', beforeUnload); if (root.UI) UI.chiudiModal(); }

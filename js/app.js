@@ -1,16 +1,22 @@
-/* app.js - V.09.00 - schermate, menu e navigazione */
+/* app.js - V.10.01 - schermate, menu e navigazione */
 (function () {
   'use strict';
   const H = UI.H;
-  const VERSIONE = 'V.10.00';
+  const VERSIONE = 'V.10.01';
   const SCHEMA_RICHIESTO = '1.4';
   const STORICO = [
+    { v: 'V.10.01', d: '28/11/2026', m: [
+      'Generatore (consegna 4B): «Genera e scarica Excel» (nominativi dall\'anagrafica, «Esterno» per il soggetto generico) e «Stampa / Salva in PDF» in A4 orizzontale, identica alla stampa di oggi.',
+      'Prima di scaricare o stampare, se ci sono modifiche non salvate viene chiesto di salvarle. Nel file Excel e nel PDF non compare alcun avviso: le verifiche restano a video.',
+      'Scheda «4 · Verifica e genera» con il nome del file Excel proposto da CIG, scheda e versione.',
+      'Registro delle modifiche della procedura (solo admin): chi, quando, operazione e nota, con «Confronta» tra stato prima e dopo.',
+      'Corretti: area di stampa nascosta da una regola css e logo non mostrato se assente.'] },
     { v: 'V.10.00', d: '27/11/2026', m: [
       'Generatore su database (consegna 4A): schermate, calcoli e controlli del Generatore V.07.04, con apertura e salvataggio sul server, indicatore «modifiche non salvate», controllo dei conflitti tra utenti e avviso all\'uscita.',
       'Persone scelte dall\'anagrafica dei soggetti (si salva l\'ID); gli esterni usano il soggetto generico «Esterno»; un nuovo assunto si aggiunge dal Generatore.',
       'Anagrafica con macrocartella e nome gruppo; scheda 3 «Cronoprogramma e liquidazione» (CRE, % liquidabile e liquidata, data, note, stato).',
       'Procedura bloccata dopo la liquidazione: modificabili solo cronoprogramma e liquidazione; sblocco e blocco anche dal Generatore. Schema richiesto: 1.4 (script 06).',
-      'Esportazione Excel, stampa e registro delle modifiche nel Generatore arrivano con la consegna 4B.'] },
+      'Esportazione Excel, stampa e registro delle modifiche nel Generatore: consegna 4B (V.10.01).'] },
     { v: 'V.09.00', d: '26/11/2026', m: [
       'Pagina Procedure: elenco di tutte le procedure con stato di liquidazione (cinque categorie colorate, avvisi sulle incoerenze), ricerca per CIG, titolo, gruppo e CUP, filtri per macrocartella (anche più d\'una), tipo, stato, CRE, schede BASE/MC e blocco, ordinamento per colonna, vista per macrocartella con subtotali.',
       'Selettore Titolo «Sintetico / Completo» (stessa funzione dell\'Estrattore V.07.06), con scelta ricordata dal browser.',

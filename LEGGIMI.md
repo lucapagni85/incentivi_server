@@ -1,4 +1,4 @@
-# Incentivi funzioni tecniche – applicazione V.10.00 (step 2, config compilata)
+# Incentivi funzioni tecniche – applicazione V.10.01 (step 4B)
 
 Provincia di Pisa · Settore Viabilità, trasporti e protezione civile
 
@@ -11,7 +11,7 @@ Provincia di Pisa · Settore Viabilità, trasporti e protezione civile
 - `js/titolo.js` – titolo sintetico (identico all'Estrattore V.07.06)
 - `js/liquidazione.js` – stato di liquidazione e ordinamento schede (condivisi con l'Estrattore)
 - `js/procedure.js` – pagina Procedure
-- `js/generatore.js` – Generatore su database (consegna 4A); `js/core.js` – nucleo di calcolo identico al Generatore V.07.04
+- `js/generatore.js` – Generatore su database (consegne 4A e 4B: Excel, stampa, registro modifiche); `js/core.js` – nucleo di calcolo identico al Generatore V.07.04
 - `js/modelli.js` – modelli Excel incorporati; `lib/jszip.min.js` – libreria per l'Excel (già inclusa)
 - `css/generatore.css` – stili del Generatore
 - `lib/` – qui va la libreria Supabase (vedi `lib/LEGGIMI.txt`)
