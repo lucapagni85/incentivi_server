@@ -1,4 +1,4 @@
-/* config.js - V.09.00
+/* config.js - V.10.00
    L'unico file da cambiare quando si passa dal server di prova (Supabase)
    al server dell'Ente.
    Project Settings > API: copia "Project URL" e la chiave "anon" (o "publishable").

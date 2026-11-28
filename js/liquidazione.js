@@ -1,4 +1,4 @@
-/* liquidazione.js - V.09.00
+/* liquidazione.js - V.10.00
    Stato di liquidazione di una procedura: logica IDENTICA all'Estrattore V.07.06
    (cinque categorie, stessi colori). Condivisa da Procedure ed Estrattore. */
 (function (root) {

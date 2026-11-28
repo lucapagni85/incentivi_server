@@ -1,4 +1,4 @@
-/* titolo.js - V.09.00
+/* titolo.js - V.10.00
    Titolo sintetico: codice COPIATO IDENTICO dall'Estrattore V.07.06 (funzione titoloSintetico e TITOLO_TOGLI).
    Toglie le parti standard (procedura START, CIG, CUP, CUI, CPV, RUP, formule ripetute) e tiene la ditta in coda.
    Le formule da togliere sono in TITOLO_TOGLI: ampliabile. Il titolo completo resta sempre disponibile. */

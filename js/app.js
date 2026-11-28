@@ -2,9 +2,15 @@
 (function () {
   'use strict';
   const H = UI.H;
-  const VERSIONE = 'V.09.00';
-  const SCHEMA_RICHIESTO = '1.3';
+  const VERSIONE = 'V.10.00';
+  const SCHEMA_RICHIESTO = '1.4';
   const STORICO = [
+    { v: 'V.10.00', d: '27/11/2026', m: [
+      'Generatore su database (consegna 4A): schermate, calcoli e controlli del Generatore V.07.04, con apertura e salvataggio sul server, indicatore «modifiche non salvate», controllo dei conflitti tra utenti e avviso all\'uscita.',
+      'Persone scelte dall\'anagrafica dei soggetti (si salva l\'ID); gli esterni usano il soggetto generico «Esterno»; un nuovo assunto si aggiunge dal Generatore.',
+      'Anagrafica con macrocartella e nome gruppo; scheda 3 «Cronoprogramma e liquidazione» (CRE, % liquidabile e liquidata, data, note, stato).',
+      'Procedura bloccata dopo la liquidazione: modificabili solo cronoprogramma e liquidazione; sblocco e blocco anche dal Generatore. Schema richiesto: 1.4 (script 06).',
+      'Esportazione Excel, stampa e registro delle modifiche nel Generatore arrivano con la consegna 4B.'] },
     { v: 'V.09.00', d: '26/11/2026', m: [
       'Pagina Procedure: elenco di tutte le procedure con stato di liquidazione (cinque categorie colorate, avvisi sulle incoerenze), ricerca per CIG, titolo, gruppo e CUP, filtri per macrocartella (anche più d\'una), tipo, stato, CRE, schede BASE/MC e blocco, ordinamento per colonna, vista per macrocartella con subtotali.',
       'Selettore Titolo «Sintetico / Completo» (stessa funzione dell\'Estrattore V.07.06), con scelta ricordata dal browser.',
@@ -18,7 +24,6 @@
   ];
   const MENU = [['procedure', 'Procedure'], ['generatore', 'Generatore'], ['estrattore', 'Estrattore'], ['amministrazione', 'Amministrazione'], ['diagnostica', 'Diagnostica']];
   const SEGNAPOSTO = {
-    generatore: ['Generatore', 'step 4', 'Creazione e modifica del gruppo di lavoro, cronoprogramma e liquidazione, con salvataggio su database e controllo dei conflitti.'],
     estrattore: ['Estrattore', 'step 5', 'Schede per soggetto, report di liquidazione e vista completa di una procedura, calcolati dai dati del database.'],
     amministrazione: ['Amministrazione', 'step 6', 'Anagrafica soggetti, macrocartelle, utenti e ruoli, eliminazione delle procedure, registro delle modifiche.']
   };
@@ -32,10 +37,10 @@
       config: 'Apri <b>config.js</b> e inserisci URL del progetto e chiave <b>anon</b> (Supabase, Project Settings, API).',
       chiave: 'Sostituisci la chiave in <b>config.js</b> con quella <b>anon / publishable</b>. Quella segreta non va mai messa nell\'app.'
     };
-    root.innerHTML = '<div class="centro"><div class="card"><h1>Configurazione necessaria</h1><div class="msg warn">' + H(e.message) + '</div><p>' + (istr[e.setup] || '') + '</p></div></div>';
+    root.innerHTML = '<div class="centro"><div class="logcard"><h1>Configurazione necessaria</h1><div class="msg warn">' + H(e.message) + '</div><p>' + (istr[e.setup] || '') + '</p></div></div>';
   }
   function schermataLogin(msg) {
-    root.innerHTML = '<div class="centro"><div class="card">' + LOGO + '<div class="ente">Provincia di Pisa</div><div class="sub">Settore Viabilità trasporti e protezione civile</div>' +
+    root.innerHTML = '<div class="centro"><div class="logcard">' + LOGO + '<div class="ente">Provincia di Pisa</div><div class="sub">Settore Viabilità trasporti e protezione civile</div>' +
       '<h1>Incentivi funzioni tecniche</h1><div class="sub">Accedi con le tue credenziali</div>' +
       '<form id="fLogin"><label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="username" required>' +
       '<label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password" required>' +
@@ -56,7 +61,7 @@
     });
   }
   function schermataSenzaProfilo() {
-    root.innerHTML = '<div class="centro"><div class="card"><h1>Utente non abilitato</h1><div class="msg warn">L\'utente <b>' + H(Auth.email) + '</b> non ha un profilo nell\'applicazione. Contatta l\'amministratore.</div>' +
+    root.innerHTML = '<div class="centro"><div class="logcard"><h1>Utente non abilitato</h1><div class="msg warn">L\'utente <b>' + H(Auth.email) + '</b> non ha un profilo nell\'applicazione. Contatta l\'amministratore.</div>' +
       '<p><button class="btn" id="bEsci">Esci</button></p></div></div>';
     document.getElementById('bEsci').onclick = async () => { await Auth.esci(); schermataLogin(); };
   }
@@ -68,7 +73,11 @@
       '<div><div class="ente">Provincia di Pisa</div><div class="settore">Settore Viabilità trasporti e protezione civile</div><div class="htit">Incentivi funzioni tecniche · art. 45 D.Lgs. 36/2023</div></div>' +
       '<div class="hdx"><div><b>' + H(Auth.nome()) + '</b> · ' + H(Auth.ruolo()) + '</div><div class="ver">' + VERSIONE + ' <button class="btn sm" id="bStorico">Storico versioni</button> <button class="btn sm" id="bEsci">Esci</button></div></div></div></header>' +
       '<nav class="menu"><div class="in" id="menu"></div></nav><main><div id="storico" class="panel storico" hidden></div><div id="pagina"></div></main>';
-    document.getElementById('bEsci').onclick = async () => { await Auth.esci(); location.hash = ''; schermataLogin(); };
+    document.getElementById('bEsci').onclick = async () => {
+      if (window.Generatore && Generatore.sporco() && !confirm('Ci sono modifiche non salvate nel Generatore. Uscire senza salvare?')) return;
+      if (window.Generatore) Generatore.chiudi();
+      await Auth.esci(); location.hash = ''; schermataLogin();
+    };
     document.getElementById('bStorico').onclick = () => {
       const b = document.getElementById('storico'); b.hidden = !b.hidden;
       if (!b.hidden) b.innerHTML = '<b>Storico delle versioni</b>' + STORICO.map(x => '<h4>' + H(x.v) + ' · ' + H(x.d) + '</h4><ul>' + x.m.map(t => '<li>' + H(t) + '</li>').join('') + '</ul>').join('');
@@ -83,11 +92,14 @@
     document.getElementById('menu').innerHTML = MENU.filter(m => Auth.puoVedere(m[0])).map(m => '<a href="#/' + m[0] + '"' + (m[0] === r ? ' class="on"' : '') + '>' + m[1] + '</a>').join('');
     const box = document.getElementById('pagina');
     box.onclick = box.oninput = box.onchange = null;
+    const pid = (location.hash || '').replace(/^#\/?/, '').split('/')[1];
+    if (r !== 'generatore' && window.Generatore) Generatore.chiudi();
+    if (r === 'generatore') { Generatore.render(box, pid); return; }
     if (r === 'procedure') { PaginaProcedure.render(box); return; }
     if (r === 'diagnostica') { paginaDiagnostica(box); return; }
-    const s = SEGNAPOSTO[r], pid = (location.hash || '').replace(/^#\/?/, '').split('/')[1];
+    const s = SEGNAPOSTO[r];
     box.innerHTML = '<div class="panel"><h2>' + H(s[0]) + '</h2><p>' + H(s[2]) + '</p><p class="hint">Sezione in preparazione (' + H(s[1]) + ').</p>' +
-      (r === 'generatore' && pid ? '<div class="msg ok">Procedura selezionata: ' + H(pid) + ' — l\'apertura nel Generatore sarà attiva dallo step 4.</div>' : '') + '</div>';
+      '</div>';
   }
 
   /* ---------- diagnostica (solo admin) ---------- */
@@ -130,7 +142,15 @@
   async function avvio() {
     try { Dati.init(); } catch (e) { schermataSetup(e); return; }
     Dati.onCambio(ev => { if (ev === 'SIGNED_OUT') setTimeout(() => { if (Auth.profilo) { Auth.azzera(); schermataLogin({ tipo: 'warn', testo: 'Sessione terminata: accedi di nuovo.' }); } }, 0); });
-    window.addEventListener('hashchange', disegna);
+    let hashPrec = location.hash;
+    window.addEventListener('hashchange', () => {
+      const dest = location.hash;
+      if (window.Generatore && Generatore.sporco() && dest !== '#/generatore/' + Generatore.idCorrente()) {
+        if (!confirm('Ci sono modifiche non salvate nel Generatore. Uscire senza salvare?')) { history.replaceState(null, '', hashPrec || '#/generatore/' + Generatore.idCorrente()); return; }
+        Generatore.chiudi();
+      }
+      hashPrec = dest; disegna();
+    });
     try {
       const esito = await Auth.carica();
       if (esito === 'ok') avviaApp(); else if (esito === 'senzaprofilo') schermataSenzaProfilo(); else schermataLogin();

@@ -1,4 +1,4 @@
-/* procedure.js - V.09.00 - anagrafica delle procedure (solo admin) */
+/* procedure.js - V.10.00 - anagrafica delle procedure (solo admin) */
 (function (root) {
   'use strict';
   const H = UI.H;
@@ -140,23 +140,7 @@
     };
   }
   function formBlocco(p, sblocca) {
-    const d = UI.modal('<h2>' + (sblocca ? 'Sblocca' : 'Blocca') + ' la procedura ' + H(p.cig) + ' · ' + H(p.scheda) + '</h2>' +
-      '<p>' + (sblocca ? 'La procedura è già stata liquidata. Sbloccandola si potrà modificare il gruppo di lavoro. L\'azione resta nel registro delle modifiche con la nota.' : 'La procedura tornerà bloccata: saranno modificabili solo i campi di liquidazione. L\'azione resta nel registro.') + '</p>' +
-      '<label>Nota' + (sblocca ? ' (obbligatoria, almeno 5 caratteri)' : ' (facoltativa)') + '</label><textarea id="bNota" placeholder="Motivo"></textarea><div id="bMsg"></div>' +
-      '<div class="az"><button class="btn p" data-a="ok">' + (sblocca ? 'Sblocca' : 'Blocca') + '</button><button class="btn" data-a="annulla">Annulla</button></div>');
-    d.querySelector('#bNota').focus();
-    d.onclick = async ev => {
-      const a = ev.target.closest('[data-a]'); if (!a) return;
-      if (a.dataset.a === 'annulla') { apriDettaglio(p.id); return; }
-      const nota = d.querySelector('#bNota').value.trim(), msg = d.querySelector('#bMsg');
-      if (sblocca && nota.length < 5) { msg.innerHTML = '<div class="msg err">Scrivi una nota di almeno 5 caratteri.</div>'; return; }
-      a.disabled = true;
-      try {
-        if (sblocca) await Dati.sbloccaProcedura(p.id, nota); else await Dati.bloccaProcedura(p.id, nota);
-        UI.toast(sblocca ? 'Procedura sbloccata.' : 'Procedura bloccata.', 'ok');
-        await ricarica(); apriDettaglio(p.id);
-      } catch (e) { msg.innerHTML = '<div class="msg err">' + H(e.message) + '</div>'; a.disabled = false; }
-    };
+    UI.dialogBlocco(p, sblocca, async () => { await ricarica(); apriDettaglio(p.id); }, () => apriDettaglio(p.id));
   }
 
   /* ---------- nuova procedura ---------- */

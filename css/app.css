@@ -1,4 +1,4 @@
-/* app.css - V.09.00 */
+/* app.css - V.10.00 */
 :root{--blu:#1F3864;--azz:#D9E1F2;--grigio:#f4f5f7;--bordo:#cfd4dc;--ok:#2e7d32;--err:#c62828;--warn:#b26a00}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -30,10 +30,10 @@ main{max-width:1240px;margin:16px auto;padding:0 20px 40px}
 label{display:block;font-size:13px;color:#444;margin:10px 0 3px}
 input[type=text],input[type=email],input[type=password]{width:100%;padding:9px;border:1px solid var(--bordo);border-radius:6px;background:#fff}
 .centro{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.card{width:100%;max-width:400px;background:#fff;border:1px solid var(--bordo);border-radius:10px;padding:26px;border-top:5px solid var(--blu)}
-.card h1{margin:6px 0 2px;font-size:20px;color:var(--blu)}
-.card .sub{color:#555;font-size:13px;margin-bottom:10px}
-.card img.logo{max-height:70px;max-width:150px;object-fit:contain;display:block;margin-bottom:6px}
+.logcard{width:100%;max-width:400px;background:#fff;border:1px solid var(--bordo);border-radius:10px;padding:26px;border-top:5px solid var(--blu)}
+.logcard h1{margin:6px 0 2px;font-size:20px;color:var(--blu)}
+.logcard .sub{color:#555;font-size:13px;margin-bottom:10px}
+.logcard img.logo{max-height:70px;max-width:150px;object-fit:contain;display:block;margin-bottom:6px}
 .msg{padding:8px 10px;border-radius:6px;font-size:13px;margin-top:10px}
 .msg.err{background:#fdecec;color:var(--err)}
 .msg.warn{background:#fff3cf;color:#7a5200}
@@ -84,3 +84,8 @@ table.pt td.mod{white-space:nowrap;font-size:12px}
 a.btn{text-decoration:none;color:inherit;display:inline-block}
 a.btn.p{color:#fff}
 .sep{border:0;border-top:1px solid var(--bordo);margin:12px 0}
+
+/* ---- stampa (Generatore): solo #printArea, A4 orizzontale ---- */
+#printArea{display:none}
+@page land{size:A4 landscape;margin:11mm 9mm 13mm 9mm;@bottom-right{content:"Pag. " counter(page) " di " counter(pages);font:8pt Arial}}
+@media print{body{background:#fff}#root,#toasts,.overlay{display:none!important}#printArea{display:block;page:land}}

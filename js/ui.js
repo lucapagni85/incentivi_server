@@ -1,4 +1,4 @@
-/* ui.js - V.09.00 - utilita' di interfaccia */
+/* ui.js - V.10.00 - utilita' di interfaccia */
 (function (root) {
   'use strict';
   const H = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -25,5 +25,26 @@
     document.body.appendChild(o); document.addEventListener('keydown', escChiudi);
     return o.firstChild;
   }
-  root.UI = { H, toast, errore, eur, pct, dataOra, data, modal, chiudiModal };
+  /* dialogo di sblocco/blocco di una procedura (condiviso da Procedure e Generatore).
+     p = riga con id, cig, scheda; dopo() a operazione riuscita; annulla() se si annulla */
+  function dialogBlocco(p, sblocca, dopo, annulla) {
+    const d = modal('<h2>' + (sblocca ? 'Sblocca' : 'Blocca') + ' la procedura ' + H(p.cig) + ' · ' + H(p.scheda) + '</h2>' +
+      '<p>' + (sblocca ? 'La procedura è già stata liquidata. Sbloccandola si potrà modificare il gruppo di lavoro. L\'azione resta nel registro delle modifiche con la nota.' : 'La procedura tornerà bloccata: saranno modificabili solo i campi di liquidazione e il cronoprogramma. L\'azione resta nel registro.') + '</p>' +
+      '<label>Nota' + (sblocca ? ' (obbligatoria, almeno 5 caratteri)' : ' (facoltativa)') + '</label><textarea id="bNota" placeholder="Motivo"></textarea><div id="bMsg"></div>' +
+      '<div class="az"><button class="btn p" data-a="ok">' + (sblocca ? 'Sblocca' : 'Blocca') + '</button><button class="btn" data-a="annulla">Annulla</button></div>');
+    d.querySelector('#bNota').focus();
+    d.onclick = async ev => {
+      const a = ev.target.closest('[data-a]'); if (!a) return;
+      if (a.dataset.a === 'annulla') { chiudiModal(); if (annulla) annulla(); return; }
+      const nota = d.querySelector('#bNota').value.trim(), msg = d.querySelector('#bMsg');
+      if (sblocca && nota.length < 5) { msg.innerHTML = '<div class="msg err">Scrivi una nota di almeno 5 caratteri.</div>'; return; }
+      a.disabled = true;
+      try {
+        if (sblocca) await root.Dati.sbloccaProcedura(p.id, nota); else await root.Dati.bloccaProcedura(p.id, nota);
+        toast(sblocca ? 'Procedura sbloccata.' : 'Procedura bloccata.', 'ok'); chiudiModal();
+        if (dopo) await dopo();
+      } catch (e) { msg.innerHTML = '<div class="msg err">' + H(e.message) + '</div>'; a.disabled = false; }
+    };
+  }
+  root.UI = { H, toast, errore, eur, pct, dataOra, data, modal, chiudiModal, dialogBlocco };
 })(window);
